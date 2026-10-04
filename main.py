@@ -1,0 +1,43 @@
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect(':memory:')
+
+conn.execute("CREATE TABLE recipe (recipe_id INTEGER PRIMARY KEY, recipe_name TEXT NOT NULL, cuisine TEXT NOT NULL, prep_mins INTEGER NOT NULL)")
+conn.execute("CREATE TABLE ingredient (ingredient_id INTEGER PRIMARY KEY, recipe_id INTEGER NOT NULL, item TEXT NOT NULL, quantity_g INTEGER NOT NULL)")
+
+conn.executemany("INSERT INTO recipe VALUES (?, ?, ?, ?)", [
+    (1, 'Pasta', 'Italian',  20),
+    (2, 'Tacos', 'Mexican',  15),
+    (3, 'Sushi', 'Japanese', 45),
+    (4, 'Pizza', 'Italian',  30),
+    (5, 'Salad', 'Greek',    10),
+])
+
+conn.executemany("INSERT INTO ingredient VALUES (?, ?, ?, ?)", [
+    (1, 1, 'Pasta',    200),
+    (2, 1, 'Sauce',    150),
+    (3, 2, 'Tortilla',  80),
+    (4, 2, 'Beef',     120),
+    (5, 3, 'Salmon',   180),
+    (6, 4, 'Dough',    250),
+    (7, 5, 'Lettuce',   50),
+    (8, 5, 'Feta',      40),
+])
+
+conn.commit()
+
+a=pd.read_sql("SELECT recipe_name AS dish, cuisine AS style, prep_mins AS time FROM recipe", conn)
+print(a)
+print("recipe table")
+b=pd.read_sql("SELECT * FROM recipe", conn)
+print(b)
+print("ingredient table")
+c=pd.read_sql("SELECT * FROM ingredient", conn)
+print(c)
+x=pd.read_sql("SELECT r.recipe_name AS dish, ing.item, ing.quantity_g AS grams FROM recipe r, ingredient ing WHERE r.recipe_id=ing.recipe_id", conn)
+print(x)
+y=pd.read_sql("SELECT recipe_name, cuisine FROM recipe WHERE recipe_id IN (SELECT recipe_id FROM ingredient WHERE quantity_g>100)", conn)
+print(y)
+z=pd.read_sql("SELECT recipe_name, prep_mins FROM recipe WHERE prep_mins=(SELECT MIN(prep_mins) FROM recipe)", conn)
+print(z)
